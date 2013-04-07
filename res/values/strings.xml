@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">TwitterSearch</string>
+    <string name="action_settings">Settings</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="search">Search</string>    
+    <string name="textoDefaultFrom">From Name</string>
+    <string name="textoDefaultTweet">Tweet Text</string>
+	<string name="dialogTitle">Twitter Searching App</string>
+</resources>
