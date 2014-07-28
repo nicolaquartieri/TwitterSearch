@@ -15,8 +15,16 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 
+import twitter4j.Twitter;
+import twitter4j.TwitterException;
+import twitter4j.TwitterFactory;
+import twitter4j.auth.RequestToken;
+import twitter4j.conf.Configuration;
+import twitter4j.conf.ConfigurationBuilder;
 import android.content.ContentValues;
+import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
@@ -29,8 +37,6 @@ import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.EditText;
-import android.widget.ListView;
 
 import com.bootcamp.globant.adapter.ListCustomAdapter;
 import com.bootcamp.globant.contentprovider.MiTwitterContentProvider;
@@ -52,44 +58,82 @@ public class SearchActivity extends FragmentActivity implements OnMesajeSend, On
 	private DialogSearch ds = null;
 	private CheckBox mcheckParallel;
 	private boolean checkParallel = false;
+	private Button mbuttonLogin;
 	
+	static String TWITTER_CONSUMER_KEY = "0wE7SWv4GxQIbGEeE9n7H0fNG";
+    static String TWITTER_CONSUMER_SECRET = "NvhHjqKg3DLtsCfei3ZaxJDtX1YuCv4GOttD8wv3K6nqTFQY05";
+    
+    // Preference Constants
+    static String PREFERENCE_NAME = "twitter_oauth";
+    static final String PREF_KEY_OAUTH_TOKEN = "oauth_token";
+    static final String PREF_KEY_OAUTH_SECRET = "oauth_token_secret";
+    static final String PREF_KEY_TWITTER_LOGIN = "isTwitterLogedIn";
+    
+    static final String TWITTER_CALLBACK_URL = "oauth://t4jsample";
+    
+    // Twitter oauth urls
+    static final String URL_TWITTER_AUTH = "auth_url";
+    static final String URL_TWITTER_OAUTH_VERIFIER = "oauth_verifier";
+    static final String URL_TWITTER_OAUTH_TOKEN = "oauth_token";
+    
+    private static Twitter twitter;
+    
+    private LoginAsyncTask loginAsyncTask = null;
+    
+    
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_search);						
+		setContentView(R.layout.login_layout);
 			
 		// Evitar esto a toda costa.
 //		ThreadPolicy tp = ThreadPolicy.LAX;
 //		StrictMode.setThreadPolicy(tp);			
 		
-		ListView listaCustom = (ListView)findViewById(R.id.listViewResult);
-		listaCustom.setOnScrollListener(this);
-		adapter = new ListCustomAdapter(this, R.layout.listview_textimage, lista);		
-		listaCustom.setAdapter(adapter);		
-		
-		mbuttonSearch = (Button) findViewById(R.id.buttonSearch);
-		mbuttonSearch.setOnClickListener(new OnClickListener() {			
+		mbuttonLogin = (Button) findViewById(R.id.loginButton);
+		mbuttonLogin.setOnClickListener(new OnClickListener() {
+			
 			@Override
-			public void onClick(View v) {				
-				lista.clear();
-				adapter.notifyDataSetChanged();
-								
-				mcheckParallel = (CheckBox) findViewById(R.id.checkParallel);
-				setCheckParallel(mcheckParallel.isChecked());
-				
-				tweetSearchTask = new TweetSearchTask(SearchActivity.this);
-				EditText tv = (EditText) findViewById(R.id.searchText);
-				tweetSearchTask.execute(tv.getText().toString());				
-				
-				showDialogSearch();												
-			}		
+			public void onClick(View v) {
+				loginToTwitter();
+			}
 		});
+		
+		// TODO Perteneciente a activity_search.xml
+//		ListView listaCustom = (ListView)findViewById(R.id.listViewResult);
+//		listaCustom.setOnScrollListener(this);
+//		adapter = new ListCustomAdapter(this, R.layout.listview_textimage, lista);		
+//		listaCustom.setAdapter(adapter);		
+//		
+//		mbuttonSearch = (Button) findViewById(R.id.buttonSearch);
+//		mbuttonSearch.setOnClickListener(new OnClickListener() {			
+//			@Override
+//			public void onClick(View v) {
+//				// TODO Validations
+//				lista.clear();
+//				adapter.notifyDataSetChanged();
+//								
+//				mcheckParallel = (CheckBox) findViewById(R.id.checkParallel);
+//				setCheckParallel(mcheckParallel.isChecked());
+//				
+//				tweetSearchTask = new TweetSearchTask(SearchActivity.this);
+//				EditText tv = (EditText) findViewById(R.id.searchText);
+//				tweetSearchTask.execute(tv.getText().toString());				
+//				
+//				showDialogSearch();												
+//			}		
+//		});
+	}
+	
+	protected void loginToTwitter() {
+		loginAsyncTask = new LoginAsyncTask(SearchActivity.this);
+		loginAsyncTask.execute();
 	}
 
 	protected void setCheckParallel(boolean checked) {
 		checkParallel = checked;
 	}
-
+	
 	public boolean getCheckParallel() {
 		return checkParallel;
 	}
@@ -106,7 +150,7 @@ public class SearchActivity extends FragmentActivity implements OnMesajeSend, On
 		getMenuInflater().inflate(R.menu.search, menu);
 		return true;
 	}
-
+	
 	public void setListResults(List<Result> result) {
 		ds.dismissAllowingStateLoss();
 						
@@ -131,7 +175,7 @@ public class SearchActivity extends FragmentActivity implements OnMesajeSend, On
     	adapter.notifyDataSetChanged();
     	findViewById(R.id.listViewResult).setVisibility(View.VISIBLE);		
 	}
-
+    
 	@Override
 	public void sendMsj(String msj) {
 		if (msj.equalsIgnoreCase("stop")) {
@@ -139,7 +183,7 @@ public class SearchActivity extends FragmentActivity implements OnMesajeSend, On
 			tweetSearchTask.cancel(true);
 		}
 	}
-
+	
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {	
 		super.onSaveInstanceState(outState);
@@ -154,7 +198,7 @@ public class SearchActivity extends FragmentActivity implements OnMesajeSend, On
     		getContentResolver().insert(MiTwitterContentProvider.CONTENT_URI, cv);    		
 		}
 	}
-
+	
 	@Override
 	protected void onRestoreInstanceState(Bundle savedInstanceState) {	
 		super.onRestoreInstanceState(savedInstanceState);
@@ -176,11 +220,12 @@ public class SearchActivity extends FragmentActivity implements OnMesajeSend, On
 	protected void onResume() {	
 		super.onResume();
 		
-		adapter.notifyDataSetChanged();
-    	findViewById(R.id.listViewResult).setVisibility(View.VISIBLE);
+		// TODO Perteneciente a activity_search.xml 
+//		adapter.notifyDataSetChanged();
+//    	findViewById(R.id.listViewResult).setVisibility(View.VISIBLE);
 	}
 	
-
+	
 	// AsyncTask
     private static class TweetSearchTask extends AsyncTask<String, Void, List<Result>> {
         private SearchActivity mActivity;
@@ -267,4 +312,53 @@ public class SearchActivity extends FragmentActivity implements OnMesajeSend, On
 	@Override
 	public void onScrollStateChanged(AbsListView view, int scrollState) {
 	}
+	
+	
+	// LoginAsyncTask
+    private static class LoginAsyncTask extends AsyncTask<Void, Void, RequestToken> {
+        private SearchActivity mActivity;
+        private List<Result> resultados = null;
+        private static RequestToken requestToken;
+        
+    	public LoginAsyncTask(SearchActivity activity) {
+    		attach(activity);
+		}
+    	
+		public void detach() {
+    		mActivity = null;
+    	}
+    	
+    	public void attach(SearchActivity activity) {
+    		mActivity = activity;
+    	}    	    
+    	
+		protected RequestToken doInBackground(Void... param) {
+			ConfigurationBuilder builder = new ConfigurationBuilder();
+	        builder.setOAuthConsumerKey(TWITTER_CONSUMER_KEY);
+	        builder.setOAuthConsumerSecret(TWITTER_CONSUMER_SECRET);
+	        Configuration configuration = builder.build();
+	        
+	        TwitterFactory factory = new TwitterFactory(configuration);
+	        twitter = factory.getInstance();
+
+	        try {
+	            requestToken = twitter.getOAuthRequestToken(TWITTER_CALLBACK_URL);
+	        } catch (TwitterException e) {
+	            e.printStackTrace();
+	        }	
+	        
+            return requestToken;
+        }
+    	
+        @Override
+        protected void onProgressUpdate(Void... values) {      
+        	
+        }
+        
+        protected void onPostExecute(List<Result> result) {
+        	if (result != null)
+        		mActivity.startActivity( new Intent( Intent.ACTION_VIEW, Uri.parse( requestToken.getAuthenticationURL() ) ) );
+        }
+		
+    }
 }
