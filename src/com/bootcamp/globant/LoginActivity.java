@@ -38,13 +38,15 @@ public class LoginActivity extends FragmentActivity {
     static final String URL_TWITTER_OAUTH_VERIFIER = "oauth_verifier";
     static final String URL_TWITTER_OAUTH_TOKEN = "oauth_token";
     
-    private static Twitter twitter;
+    private static TwitterFactory factory;
     
     private static SharedPreferences mSharedPreferences;
     
     private static RequestToken requestToken;
     
     private LoginAsyncTask loginAsyncTask = null;
+
+	private Button mbuttonLogout;
     
     
 	@Override
@@ -58,6 +60,12 @@ public class LoginActivity extends FragmentActivity {
 		
 		mSharedPreferences = getApplicationContext().getSharedPreferences("TwitterSearchPref", 0);
 		
+		ConfigurationBuilder builder = new ConfigurationBuilder();
+        builder.setOAuthConsumerKey(TWITTER_CONSUMER_KEY);
+        builder.setOAuthConsumerSecret(TWITTER_CONSUMER_SECRET);
+        Configuration configuration = builder.build();
+        factory = new TwitterFactory(configuration);
+        
 		mbuttonLogin = (Button) findViewById(R.id.loginButton);
 		mbuttonLogin.setOnClickListener(new OnClickListener() {
 			
@@ -78,7 +86,7 @@ public class LoginActivity extends FragmentActivity {
 				accessTokenAsyncTask.execute( verifier );
 			}
 		} else {
-			// TODO ir directamente a la vista de Search.
+			startActivity( new Intent( getApplicationContext(), SearchActivity.class ) );
 		}
 	}
 	
@@ -87,13 +95,10 @@ public class LoginActivity extends FragmentActivity {
 	}
 
 	protected void loginToTwitter() {
-		if ( !isTwitterLogin() ) {
-			loginAsyncTask = new LoginAsyncTask(LoginActivity.this);
-			loginAsyncTask.execute();
-		}
+		loginAsyncTask = new LoginAsyncTask(LoginActivity.this);
+		loginAsyncTask.execute();
 	}
 	
-	// TODO create Button for this call.
 	protected void logoutToTwitter() {
 		Editor e = mSharedPreferences.edit();
 		
@@ -108,6 +113,18 @@ public class LoginActivity extends FragmentActivity {
 	protected void onResume() {	
 		super.onResume();
 	}
+	
+	@Override
+	protected void onDestroy() {
+		logoutToTwitter();
+		
+		super.onDestroy();
+	}
+	
+	public static Twitter getTwitterInstance(AccessToken accessToken) {
+		return factory.getInstance(accessToken);
+	}
+	
 	
 	
 	// LoginAsyncTask
@@ -127,13 +144,8 @@ public class LoginActivity extends FragmentActivity {
     	}    	    
     	
 		protected RequestToken doInBackground(Void... param) {
-			ConfigurationBuilder builder = new ConfigurationBuilder();
-	        builder.setOAuthConsumerKey(TWITTER_CONSUMER_KEY);
-	        builder.setOAuthConsumerSecret(TWITTER_CONSUMER_SECRET);
-	        Configuration configuration = builder.build();
-	        
-	        TwitterFactory factory = new TwitterFactory(configuration);
-	        twitter = factory.getInstance();
+			
+	        Twitter twitter = factory.getInstance();
 	        
 	        RequestToken requestToken = null;
 	        try {
@@ -146,7 +158,7 @@ public class LoginActivity extends FragmentActivity {
         }
     	
         @Override
-        protected void onProgressUpdate(Void... values) {      
+        protected void onProgressUpdate(Void... values) {
         	
         }
         
@@ -160,7 +172,7 @@ public class LoginActivity extends FragmentActivity {
 		
     }
     
- // AccessTokenAsyncTask
+    // AccessTokenAsyncTask
     private static class AccessTokenAsyncTask extends AsyncTask<String, Void, AccessToken> {
         private LoginActivity mActivity;
         
@@ -177,15 +189,9 @@ public class LoginActivity extends FragmentActivity {
     	}    	    
     	
 		protected AccessToken doInBackground(String... param) {
-			ConfigurationBuilder builder = new ConfigurationBuilder();
-	        builder.setOAuthConsumerKey(TWITTER_CONSUMER_KEY);
-	        builder.setOAuthConsumerSecret(TWITTER_CONSUMER_SECRET);
-	        Configuration configuration = builder.build();
-	        
-	        AccessToken accessToken = null;
-	        
-	        TwitterFactory factory = new TwitterFactory(configuration);
-	        twitter = factory.getInstance();
+			AccessToken accessToken = null;
+			
+	        Twitter twitter = factory.getInstance();
 	        
 	        try {
 	        	accessToken = twitter.getOAuthAccessToken( requestToken, param[0] );

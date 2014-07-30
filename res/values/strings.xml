@@ -8,4 +8,6 @@
     <string name="textoDefaultFrom">From Name</string>
     <string name="textoDefaultTweet">Tweet Text</string>
 	<string name="dialogTitle">Twitter Searching App</string>
+	
+	<string name="login">Twitter Sign in</string>
 </resources>

@@ -1,28 +1,20 @@
 package com.bootcamp.globant;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.protocol.BasicHttpContext;
-import org.apache.http.protocol.HttpContext;
-
-import android.content.ContentValues;
-import android.database.Cursor;
+import twitter4j.Query;
+import twitter4j.QueryResult;
+import twitter4j.Twitter;
+import twitter4j.TwitterException;
+import twitter4j.auth.AccessToken;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.util.Log;
-import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AbsListView;
@@ -36,12 +28,8 @@ import com.bootcamp.globant.adapter.ListCustomAdapter;
 import com.bootcamp.globant.contentprovider.MiTwitterContentProvider;
 import com.bootcamp.globant.dialog.DialogSearch;
 import com.bootcamp.globant.dialog.DialogSearch.OnMesajeSend;
-import com.bootcamp.globant.model.Result;
-import com.bootcamp.globant.model.SearchRespuesta;
 import com.bootcamp.globant.model.TweetElement;
 import com.bootcamp.globant.model.WrapperItem;
-import com.bootcamp.globant.sql.MiSQLiteHelper;
-import com.google.gson.Gson;
 
 public class SearchActivity extends FragmentActivity implements OnMesajeSend, OnScrollListener {
 
@@ -99,33 +87,28 @@ public class SearchActivity extends FragmentActivity implements OnMesajeSend, On
 		FragmentManager fm = getSupportFragmentManager();	
 		ds.show(fm, "fragment_dialog");
 	}
-	
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.search, menu);
-		return true;
-	}
 
-	public void setListResults(List<Result> result) {
+	public void setListResults(List<twitter4j.Status> result) {
 		ds.dismissAllowingStateLoss();
 						
 		getContentResolver().delete(MiTwitterContentProvider.CONTENT_URI.buildUpon().build(), null , null);
 		toTweetList(result, true);
 	}
 	
-    private void toTweetList(List<Result> resultados, boolean doSave) {
-    	for (Result result : resultados) {
-    		lista.add(new WrapperItem(new TweetElement(result.fromUser, result.text, result.profileImageUrl)));
+    private void toTweetList(List<twitter4j.Status> resultados, boolean doSave) {
+    	for (twitter4j.Status result : resultados) {
+    		lista.add(new WrapperItem(new TweetElement(result.getUser().getName(), 
+    												   result.getText(), 
+    												   result.getUser().getProfileImageURL())));
     		
-    		// TODO Refactoring
-    		if (doSave) {    			
-	    		ContentValues cv = new ContentValues();
-	    		cv.put(MiSQLiteHelper.TWEET_COLUMNA_FROM, result.from_user_id );
-	    		cv.put(MiSQLiteHelper.TWEET_COLUMNA_TWEET, result.text);
-	    		cv.put(MiSQLiteHelper.TWEET_COLUMNA_IMAGEN, result.profileImageUrl);
-	    		getContentResolver().insert(MiTwitterContentProvider.CONTENT_URI, cv);
-    		}
+    		// TODO Update deprecated methods
+//    		if (doSave) {
+//	    		ContentValues cv = new ContentValues();
+//	    		cv.put(MiSQLiteHelper.TWEET_COLUMNA_FROM, result.from_user_id );
+//	    		cv.put(MiSQLiteHelper.TWEET_COLUMNA_TWEET, result.text);
+//	    		cv.put(MiSQLiteHelper.TWEET_COLUMNA_IMAGEN, result.profileImageUrl);
+//	    		getContentResolver().insert(MiTwitterContentProvider.CONTENT_URI, cv);
+//    		}
 		}
     	
     	adapter.notifyDataSetChanged();
@@ -140,37 +123,38 @@ public class SearchActivity extends FragmentActivity implements OnMesajeSend, On
 		}
 	}
 
-	@Override
-	protected void onSaveInstanceState(Bundle outState) {	
-		super.onSaveInstanceState(outState);
-		
-		getContentResolver().delete(MiTwitterContentProvider.CONTENT_URI.buildUpon().build(), null , null);
-		for (WrapperItem item : lista) {   		    		    		    		
-    		ContentValues cv = new ContentValues();
-    		
-    		cv.put(MiSQLiteHelper.TWEET_COLUMNA_FROM,  item.getTweetElemento().getTextoFrom());
-    		cv.put(MiSQLiteHelper.TWEET_COLUMNA_TWEET, item.getTweetElemento().getTextoTweet());
-    		cv.put(MiSQLiteHelper.TWEET_COLUMNA_IMAGEN, item.getTweetElemento().getImagen());
-    		getContentResolver().insert(MiTwitterContentProvider.CONTENT_URI, cv);    		
-		}
-	}
+	// TODO Update deprecated methods
+//	@Override
+//	protected void onSaveInstanceState(Bundle outState) {	
+//		super.onSaveInstanceState(outState);
+//		
+//		getContentResolver().delete(MiTwitterContentProvider.CONTENT_URI.buildUpon().build(), null , null);
+//		for (WrapperItem item : lista) {   		    		    		    		
+//    		ContentValues cv = new ContentValues();
+//    		
+//    		cv.put(MiSQLiteHelper.TWEET_COLUMNA_FROM,  item.getTweetElemento().getTextoFrom());
+//    		cv.put(MiSQLiteHelper.TWEET_COLUMNA_TWEET, item.getTweetElemento().getTextoTweet());
+//    		cv.put(MiSQLiteHelper.TWEET_COLUMNA_IMAGEN, item.getTweetElemento().getImagen());
+//    		getContentResolver().insert(MiTwitterContentProvider.CONTENT_URI, cv);    		
+//		}
+//	}
 
-	@Override
-	protected void onRestoreInstanceState(Bundle savedInstanceState) {	
-		super.onRestoreInstanceState(savedInstanceState);
-		
-		Cursor cursor = managedQuery(MiTwitterContentProvider.CONTENT_URI , null, null, null, null);
-		cursor.moveToFirst();
-		while (!cursor.isAfterLast()) {			
-			lista.add(new WrapperItem(new TweetElement(cursor.getString(1), 
-													   cursor.getString(2), 
-													   cursor.getString(3))));
-			
-			cursor.moveToNext();
-		}		
-				
-		cursor.close();
-	}
+//	@Override
+//	protected void onRestoreInstanceState(Bundle savedInstanceState) {	
+//		super.onRestoreInstanceState(savedInstanceState);
+//		
+//		Cursor cursor = managedQuery(MiTwitterContentProvider.CONTENT_URI , null, null, null, null);
+//		cursor.moveToFirst();
+//		while (!cursor.isAfterLast()) {			
+//			lista.add(new WrapperItem(new TweetElement(cursor.getString(1), 
+//													   cursor.getString(2), 
+//													   cursor.getString(3))));
+//			
+//			cursor.moveToNext();
+//		}		
+//				
+//		cursor.close();
+//	}
 	
 	@Override
 	protected void onResume() {	
@@ -180,11 +164,12 @@ public class SearchActivity extends FragmentActivity implements OnMesajeSend, On
     	findViewById(R.id.listViewResult).setVisibility(View.VISIBLE);
 	}
 	
-
+	
 	// AsyncTask
-    private static class TweetSearchTask extends AsyncTask<String, Void, List<Result>> {
+    private static class TweetSearchTask extends AsyncTask<String, Void, List<twitter4j.Status>> {
         private SearchActivity mActivity;
-        private List<Result> resultados = null;
+        private List<twitter4j.Status> resultados = null;
+		private SharedPreferences mSP;
     	
         
     	public TweetSearchTask(SearchActivity activity) {
@@ -197,64 +182,36 @@ public class SearchActivity extends FragmentActivity implements OnMesajeSend, On
     	
     	public void attach(SearchActivity activity) {
     		mActivity = activity;
-    	}    	    
-    	
-		protected String getASCIIContentFromEntity(HttpEntity entity) throws IllegalStateException, IOException {
-			InputStream in = entity.getContent();
-			StringBuffer out = new StringBuffer();
-			int n = 1;
-			while (n > 0) {
-				byte[] b = new byte[4096];
-				n = in.read(b);
-				if (n > 0)
-					out.append(new String(b, 0, n));
-			}
-			return out.toString();
-		}
+    		
+    		mSP = mActivity.getApplicationContext().getSharedPreferences("TwitterSearchPref", 0);
+    	}
 
-    	protected List<Result> doInBackground(String... param) {    		
-    		String text = null;
-            
-        	HttpClient httpClient = new DefaultHttpClient();
-			HttpContext localContext = new BasicHttpContext();
+    	protected List<twitter4j.Status> doInBackground(String... param) {
 			
-			String url = new String("http://search.twitter.com/search.json?q=" + URLEncoder.encode(param[0]) +
-																		  "&rpp=" + URLEncoder.encode("30") +
-																		  "&include_entities=" + URLEncoder.encode("true") +
-																		  "&result_type=" + URLEncoder.encode("mixed"));
-			
-			Log.e("INFO", url);
-			
-			HttpGet httpGet = new HttpGet(url);			
-						
-			HttpResponse response = null;		    
 			try {
-				response = httpClient.execute(httpGet, localContext);
-				HttpEntity entity = response.getEntity();
-				text = getASCIIContentFromEntity(entity);
-					
-				Gson gson = new Gson();
+				String token = mSP.getString(LoginActivity.PREF_KEY_OAUTH_TOKEN, null);
+				String tokenAuth = mSP.getString(LoginActivity.PREF_KEY_OAUTH_SECRET, null);
 				
-				SearchRespuesta sr = gson.fromJson(text, SearchRespuesta.class);
-				
-				resultados = sr.results;											
-			} catch (ClientProtocolException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
+				Twitter twitter = LoginActivity.getTwitterInstance( new AccessToken( token, tokenAuth) );
+			    Query query = new Query( param[0] );
+			    QueryResult result = twitter.search( query );
+			    
+				resultados = result.getTweets();
+			} catch (TwitterException e) {
 				e.printStackTrace();
 			}
-            	
+            
             return resultados;
         }
     	
         @Override
-        protected void onProgressUpdate(Void... values) {      
+        protected void onProgressUpdate(Void... values) {
         	
         }
         
-        protected void onPostExecute(List<Result> result) {
+        protected void onPostExecute(List<twitter4j.Status> result) {
         	if (result != null)
-        		mActivity.setListResults(result);
+        		mActivity.setListResults( result );
         }
 		
     }
