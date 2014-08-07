@@ -1,6 +1,5 @@
 package com.bootcamp.globant;
 
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,88 +8,86 @@ import twitter4j.QueryResult;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.auth.AccessToken;
+import android.app.SearchManager;
+import android.app.SearchableInfo;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentManager;
+import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.SearchView;
+import android.support.v7.widget.SearchView.OnQueryTextListener;
+import android.text.TextUtils;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
-import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.EditText;
 import android.widget.ListView;
 
 import com.bootcamp.globant.adapter.ListCustomAdapter;
 import com.bootcamp.globant.contentprovider.MiTwitterContentProvider;
-import com.bootcamp.globant.dialog.DialogSearch;
 import com.bootcamp.globant.dialog.DialogSearch.OnMesajeSend;
 import com.bootcamp.globant.model.TweetElement;
 import com.bootcamp.globant.model.WrapperItem;
 
-public class SearchActivity extends FragmentActivity implements OnMesajeSend, OnScrollListener {
+public class SearchActivity extends ActionBarActivity implements OnMesajeSend, OnScrollListener, OnQueryTextListener {
 
-	private Button mbuttonSearch = null;
-	private ListCustomAdapter adapter = null;
+	private ListCustomAdapter mAdapter = null;
 	private List<WrapperItem> lista = new ArrayList<WrapperItem>();
+	
 	private TweetSearchTask tweetSearchTask = null;
-	private DialogSearch ds = null;
+	
 	private CheckBox mcheckParallel;
 	private boolean checkParallel = false;
+	
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_search);
-			
+		
+		setTitle(null);
+		
 		// Evitar esto a toda costa.
 //		ThreadPolicy tp = ThreadPolicy.LAX;
 		// StrictMode.setThreadPolicy(tp);
-
+		
 		ListView listaCustom = (ListView) findViewById(R.id.listViewResult);
 		listaCustom.setOnScrollListener(this);
-		adapter = new ListCustomAdapter(this, R.layout.listview_textimage,lista);
-		listaCustom.setAdapter(adapter);
-
-		mbuttonSearch = (Button) findViewById(R.id.buttonSearch);
-		mbuttonSearch.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				lista.clear();
-				adapter.notifyDataSetChanged();
-
-				mcheckParallel = (CheckBox) findViewById(R.id.checkParallel);
-				setCheckParallel(mcheckParallel.isChecked());
-
-				tweetSearchTask = new TweetSearchTask(SearchActivity.this);
-				EditText tv = (EditText) findViewById(R.id.searchText);
-				tweetSearchTask.execute(tv.getText().toString());
-
-				showDialogSearch();
-			}
-		});
+		mAdapter = new ListCustomAdapter(this, R.layout.listview_textimage,lista);
+		listaCustom.setAdapter(mAdapter);
 	}
-
+	
+	@Override
+	protected void onStart() {
+		super.onStart();
+		
+    	// Search Voice 
+        final Intent queryIntent = getIntent();
+        final String queryAction = getIntent().getAction();
+        if ( Intent.ACTION_SEARCH.equals( queryAction ) ) {
+        	String queryText = queryIntent.getStringExtra(SearchManager.QUERY);
+            
+			tweetSearchTask = new TweetSearchTask(SearchActivity.this);
+			tweetSearchTask.execute( queryText );
+        }
+	}
+	
 	protected void setCheckParallel(boolean checked) {
 		checkParallel = checked;
 	}
-
+	
 	public boolean getCheckParallel() {
 		return checkParallel;
 	}
 	
-	private void showDialogSearch() {
-		ds = new DialogSearch();		
-		FragmentManager fm = getSupportFragmentManager();	
-		ds.show(fm, "fragment_dialog");
-	}
-
 	public void setListResults(List<twitter4j.Status> result) {
-		ds.dismissAllowingStateLoss();
-						
 		getContentResolver().delete(MiTwitterContentProvider.CONTENT_URI.buildUpon().build(), null , null);
 		toTweetList(result, true);
 	}
@@ -111,10 +108,10 @@ public class SearchActivity extends FragmentActivity implements OnMesajeSend, On
 //    		}
 		}
     	
-    	adapter.notifyDataSetChanged();
-    	findViewById(R.id.listViewResult).setVisibility(View.VISIBLE);		
+    	mAdapter.notifyDataSetChanged();
+    	findViewById(R.id.listViewResult).setVisibility(View.VISIBLE);
 	}
-
+    
 	@Override
 	public void sendMsj(String msj) {
 		if (msj.equalsIgnoreCase("stop")) {
@@ -157,13 +154,31 @@ public class SearchActivity extends FragmentActivity implements OnMesajeSend, On
 //	}
 	
 	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.menu, menu);
+    	
+    	SearchManager searchManager = (SearchManager)getSystemService(Context.SEARCH_SERVICE);
+        SearchableInfo si = searchManager.getSearchableInfo( new ComponentName(getApplicationContext(), SearchActivity.class) );
+        
+        List<SearchableInfo> searchables = searchManager.getSearchablesInGlobalSearch();
+        
+    	MenuItem item = menu.findItem(R.id.action_search);
+    	SearchView searchView = (SearchView) item.getActionView();
+    	searchView.setSearchableInfo(si);
+    	searchView.setOnQueryTextListener(this);
+    	searchView.setQueryHint(getResources().getText(R.string.search));
+		
+		return super.onCreateOptionsMenu(menu);
+	}
+	
+	@Override
 	protected void onResume() {	
 		super.onResume();
 		
-		adapter.notifyDataSetChanged();
+		mAdapter.notifyDataSetChanged();
     	findViewById(R.id.listViewResult).setVisibility(View.VISIBLE);
 	}
-	
 	
 	// AsyncTask
     private static class TweetSearchTask extends AsyncTask<String, Void, List<twitter4j.Status>> {
@@ -185,7 +200,7 @@ public class SearchActivity extends FragmentActivity implements OnMesajeSend, On
     		
     		mSP = mActivity.getApplicationContext().getSharedPreferences("TwitterSearchPref", 0);
     	}
-
+    	
     	protected List<twitter4j.Status> doInBackground(String... param) {
 			
 			try {
@@ -215,13 +230,32 @@ public class SearchActivity extends FragmentActivity implements OnMesajeSend, On
         }
 		
     }
-
+    
 	@Override
 	public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
 		Log.e("INFO", "firstVisibleItem: "+firstVisibleItem+" ;visibleItemCount: "+visibleItemCount+" ;"+totalItemCount);
 	}
-
+	
 	@Override
 	public void onScrollStateChanged(AbsListView view, int scrollState) {
 	}
+	
+	public void doFilter(String newFilter) {
+		mAdapter.getFilter().filter(newFilter);
+	}
+	
+	@Override
+	public boolean onQueryTextChange(String newText) {
+        String newFilter = !TextUtils.isEmpty(newText) ? newText : null;
+        
+        doFilter(newFilter);
+        
+		return true;
+	}
+	
+	@Override
+	public boolean onQueryTextSubmit(String arg0) {
+		return false;
+	}
+	
 }

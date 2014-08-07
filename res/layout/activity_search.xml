@@ -8,52 +8,21 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context=".SearchActivity" >
 
-    <EditText
-        android:id="@+id/searchText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentTop="true"
-        android:layout_marginTop="40dp"
-        android:ems="10" >
-
-        <requestFocus />
-    </EditText>
-    
-    <Button
-        android:id="@+id/buttonSearch"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/searchText"
-        android:layout_below="@+id/searchText"
-        android:text="@string/search" />    
-     
     <ListView
         android:id="@+id/listViewResult"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignLeft="@id/buttonSearch"
-        android:layout_below="@id/buttonSearch"
+        
         android:layout_marginTop="36dp"
         android:visibility="invisible" >
     </ListView>
-
-    <ImageView
-        android:id="@+id/imageView1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/searchText"
-        android:layout_alignParentTop="true"
-        android:src="@drawable/twitter_logo_scale" />
 
     <CheckBox
         android:id="@+id/checkParallel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignBaseline="@+id/buttonSearch"
-        android:layout_alignBottom="@+id/buttonSearch"
-        android:layout_toRightOf="@+id/buttonSearch"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
         android:text="Parallel Tasks" />
   
 </RelativeLayout>

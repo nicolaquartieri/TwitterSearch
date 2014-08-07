@@ -54,6 +54,8 @@ public class LoginActivity extends FragmentActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.login_layout);
 		
+		setTitle(null);
+		
 		// Evitar esto a toda costa.
 //		ThreadPolicy tp = ThreadPolicy.LAX;
 //		StrictMode.setThreadPolicy(tp);			

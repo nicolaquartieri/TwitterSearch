@@ -9,5 +9,13 @@
     <string name="textoDefaultTweet">Tweet Text</string>
 	<string name="dialogTitle">Twitter Searching App</string>
 	
-	<string name="login">Twitter Sign in</string>
+	<string name="login">Sign in</string>
+	
+	<string name="title">Twitter Search</string>
+	
+	<string name="app_label"></string>
+	
+	<string name="search_title">Search</string>
+	<string name="refresh_title">Refresh</string>
+	
 </resources>
