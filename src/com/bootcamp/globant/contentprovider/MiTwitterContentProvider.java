@@ -98,7 +98,6 @@ public class MiTwitterContentProvider extends ContentProvider {
 
 	@Override
 	public int update(Uri uri, ContentValues cv, String arg2, String[] arg3) {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 

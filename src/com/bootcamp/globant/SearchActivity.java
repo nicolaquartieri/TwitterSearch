@@ -11,9 +11,11 @@ import twitter4j.auth.AccessToken;
 import android.app.SearchManager;
 import android.app.SearchableInfo;
 import android.content.ComponentName;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
@@ -35,6 +37,7 @@ import com.bootcamp.globant.contentprovider.MiTwitterContentProvider;
 import com.bootcamp.globant.dialog.DialogSearch.OnMesajeSend;
 import com.bootcamp.globant.model.TweetElement;
 import com.bootcamp.globant.model.WrapperItem;
+import com.bootcamp.globant.sql.MiSQLiteHelper;
 
 public class SearchActivity extends ActionBarActivity implements OnMesajeSend, OnScrollListener, OnQueryTextListener {
 
@@ -98,14 +101,13 @@ public class SearchActivity extends ActionBarActivity implements OnMesajeSend, O
     												   result.getText(), 
     												   result.getUser().getProfileImageURL())));
     		
-    		// TODO Update deprecated methods
-//    		if (doSave) {
-//	    		ContentValues cv = new ContentValues();
-//	    		cv.put(MiSQLiteHelper.TWEET_COLUMNA_FROM, result.from_user_id );
-//	    		cv.put(MiSQLiteHelper.TWEET_COLUMNA_TWEET, result.text);
-//	    		cv.put(MiSQLiteHelper.TWEET_COLUMNA_IMAGEN, result.profileImageUrl);
-//	    		getContentResolver().insert(MiTwitterContentProvider.CONTENT_URI, cv);
-//    		}
+    		if (doSave) {
+	    		ContentValues cv = new ContentValues();
+	    		cv.put(MiSQLiteHelper.TWEET_COLUMNA_FROM, result.getUser().getId() );
+	    		cv.put(MiSQLiteHelper.TWEET_COLUMNA_TWEET, result.getText());
+	    		cv.put(MiSQLiteHelper.TWEET_COLUMNA_IMAGEN, result.getUser().getProfileImageURL() );
+	    		getContentResolver().insert(MiTwitterContentProvider.CONTENT_URI, cv);
+    		}
 		}
     	
     	mAdapter.notifyDataSetChanged();
@@ -121,37 +123,42 @@ public class SearchActivity extends ActionBarActivity implements OnMesajeSend, O
 	}
 
 	// TODO Update deprecated methods
-//	@Override
-//	protected void onSaveInstanceState(Bundle outState) {	
-//		super.onSaveInstanceState(outState);
-//		
-//		getContentResolver().delete(MiTwitterContentProvider.CONTENT_URI.buildUpon().build(), null , null);
-//		for (WrapperItem item : lista) {   		    		    		    		
-//    		ContentValues cv = new ContentValues();
-//    		
-//    		cv.put(MiSQLiteHelper.TWEET_COLUMNA_FROM,  item.getTweetElemento().getTextoFrom());
-//    		cv.put(MiSQLiteHelper.TWEET_COLUMNA_TWEET, item.getTweetElemento().getTextoTweet());
-//    		cv.put(MiSQLiteHelper.TWEET_COLUMNA_IMAGEN, item.getTweetElemento().getImagen());
-//    		getContentResolver().insert(MiTwitterContentProvider.CONTENT_URI, cv);    		
-//		}
-//	}
+	@Override
+	protected void onSaveInstanceState(Bundle outState) {	
+		super.onSaveInstanceState(outState);
+		
+		getContentResolver().delete(MiTwitterContentProvider.CONTENT_URI.buildUpon().build(), null , null);
+		for (WrapperItem item : lista) {   		    		    		    		
+    		ContentValues cv = new ContentValues();
+    		
+    		cv.put(MiSQLiteHelper.TWEET_COLUMNA_FROM,  item.getTweetElemento().getTextoFrom());
+    		cv.put(MiSQLiteHelper.TWEET_COLUMNA_TWEET, item.getTweetElemento().getTextoTweet());
+    		cv.put(MiSQLiteHelper.TWEET_COLUMNA_IMAGEN, item.getTweetElemento().getImagen());
+    		getContentResolver().insert(MiTwitterContentProvider.CONTENT_URI, cv);    		
+		}
+	}
 
-//	@Override
-//	protected void onRestoreInstanceState(Bundle savedInstanceState) {	
-//		super.onRestoreInstanceState(savedInstanceState);
-//		
-//		Cursor cursor = managedQuery(MiTwitterContentProvider.CONTENT_URI , null, null, null, null);
-//		cursor.moveToFirst();
-//		while (!cursor.isAfterLast()) {			
-//			lista.add(new WrapperItem(new TweetElement(cursor.getString(1), 
-//													   cursor.getString(2), 
-//													   cursor.getString(3))));
-//			
-//			cursor.moveToNext();
-//		}		
-//				
-//		cursor.close();
-//	}
+	@Override
+	protected void onRestoreInstanceState(Bundle savedInstanceState) {	
+		super.onRestoreInstanceState(savedInstanceState);
+		
+		String[] columns = new String[] { MiSQLiteHelper.TWEET_ID,
+										  MiSQLiteHelper.TWEET_COLUMNA_TWEET,
+										  MiSQLiteHelper.TWEET_COLUMNA_IMAGEN };
+		
+		Cursor cursor = getContentResolver().query(MiTwitterContentProvider.CONTENT_URI, columns, null, null, null);
+		
+		cursor.moveToFirst();
+		while (!cursor.isAfterLast()) {			
+			lista.add(new WrapperItem(new TweetElement(cursor.getString(1), 
+													   cursor.getString(2), 
+													   cursor.getString(3))));
+			
+			cursor.moveToNext();
+		}		
+				
+		cursor.close();
+	}
 	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
