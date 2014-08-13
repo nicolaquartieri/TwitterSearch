@@ -49,6 +49,7 @@ public class SearchActivity extends ActionBarActivity implements OnMesajeSend, O
 	private CheckBox mcheckParallel;
 	private boolean checkParallel = false;
 	
+	private String queryText = null;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -75,7 +76,7 @@ public class SearchActivity extends ActionBarActivity implements OnMesajeSend, O
         final Intent queryIntent = getIntent();
         final String queryAction = getIntent().getAction();
         if ( Intent.ACTION_SEARCH.equals( queryAction ) ) {
-        	String queryText = queryIntent.getStringExtra(SearchManager.QUERY);
+        	queryText = queryIntent.getStringExtra(SearchManager.QUERY);
             
 			tweetSearchTask = new TweetSearchTask(SearchActivity.this);
 			tweetSearchTask.execute( queryText );
@@ -122,7 +123,6 @@ public class SearchActivity extends ActionBarActivity implements OnMesajeSend, O
 		}
 	}
 
-	// TODO Update deprecated methods
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {	
 		super.onSaveInstanceState(outState);
@@ -241,6 +241,14 @@ public class SearchActivity extends ActionBarActivity implements OnMesajeSend, O
 	@Override
 	public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
 		Log.e("INFO", "firstVisibleItem: "+firstVisibleItem+" ;visibleItemCount: "+visibleItemCount+" ;"+totalItemCount);
+		
+		int totalElementsSaw = firstVisibleItem + visibleItemCount;
+		
+		if ( totalElementsSaw == totalItemCount && totalElementsSaw != 0 && totalElementsSaw != 0 ) {
+			tweetSearchTask = new TweetSearchTask(SearchActivity.this);
+			tweetSearchTask.execute( queryText );
+		}
+			
 	}
 	
 	@Override
