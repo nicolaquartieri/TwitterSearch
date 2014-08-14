@@ -1,5 +1,5 @@
-bin/*
+bin/
 .classpath
-gen/*
+gen/
 project.properties
 

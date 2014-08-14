@@ -50,6 +50,7 @@ public class SearchActivity extends ActionBarActivity implements OnMesajeSend, O
 	private boolean checkParallel = false;
 	
 	private String queryText = null;
+	private int mySearchViewListFragment;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -271,6 +272,10 @@ public class SearchActivity extends ActionBarActivity implements OnMesajeSend, O
 	@Override
 	public boolean onQueryTextSubmit(String arg0) {
 		return false;
+	}
+
+	public void setMySearchListFragment(int mySearchViewListFragment) {
+		this.mySearchViewListFragment = mySearchViewListFragment;
 	}
 	
 }
