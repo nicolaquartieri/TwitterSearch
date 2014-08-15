@@ -30,11 +30,11 @@ import android.view.View;
 import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
 import android.widget.CheckBox;
-import android.widget.ListView;
 
 import com.bootcamp.globant.adapter.ListCustomAdapter;
 import com.bootcamp.globant.contentprovider.MiTwitterContentProvider;
 import com.bootcamp.globant.dialog.DialogSearch.OnMesajeSend;
+import com.bootcamp.globant.fragments.MySearchListFragment;
 import com.bootcamp.globant.model.TweetElement;
 import com.bootcamp.globant.model.WrapperItem;
 import com.bootcamp.globant.sql.MiSQLiteHelper;
@@ -51,6 +51,7 @@ public class SearchActivity extends ActionBarActivity implements OnMesajeSend, O
 	
 	private String queryText = null;
 	private int mySearchViewListFragment;
+	private String searchVoiceText;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -63,25 +64,21 @@ public class SearchActivity extends ActionBarActivity implements OnMesajeSend, O
 //		ThreadPolicy tp = ThreadPolicy.LAX;
 		// StrictMode.setThreadPolicy(tp);
 		
-		ListView listaCustom = (ListView) findViewById(R.id.listViewResult);
-		listaCustom.setOnScrollListener(this);
-		mAdapter = new ListCustomAdapter(this, R.layout.listview_textimage,lista);
-		listaCustom.setAdapter(mAdapter);
+		if (savedInstanceState == null) {
+			getSupportFragmentManager().beginTransaction().add(R.id.container, new MySearchListFragment()).commit();
+		}
 	}
 	
 	@Override
 	protected void onStart() {
-		super.onStart();
-		
     	// Search Voice 
         final Intent queryIntent = getIntent();
         final String queryAction = getIntent().getAction();
         if ( Intent.ACTION_SEARCH.equals( queryAction ) ) {
         	queryText = queryIntent.getStringExtra(SearchManager.QUERY);
-            
-			tweetSearchTask = new TweetSearchTask(SearchActivity.this);
-			tweetSearchTask.execute( queryText );
         }
+        
+        super.onStart();
 	}
 	
 	protected void setCheckParallel(boolean checked) {
@@ -113,7 +110,7 @@ public class SearchActivity extends ActionBarActivity implements OnMesajeSend, O
 		}
     	
     	mAdapter.notifyDataSetChanged();
-    	findViewById(R.id.listViewResult).setVisibility(View.VISIBLE);
+    	findViewById(R.id.list).setVisibility(View.VISIBLE);
 	}
     
 	@Override
@@ -180,13 +177,13 @@ public class SearchActivity extends ActionBarActivity implements OnMesajeSend, O
 		return super.onCreateOptionsMenu(menu);
 	}
 	
-	@Override
-	protected void onResume() {	
-		super.onResume();
-		
-		mAdapter.notifyDataSetChanged();
-    	findViewById(R.id.listViewResult).setVisibility(View.VISIBLE);
-	}
+//	@Override
+//	protected void onResume() {	
+//		super.onResume();
+//		
+//		mAdapter.notifyDataSetChanged();
+//    	findViewById(R.id.listViewResult).setVisibility(View.VISIBLE);
+//	}
 	
 	// AsyncTask
     private static class TweetSearchTask extends AsyncTask<String, Void, List<twitter4j.Status>> {
@@ -264,7 +261,7 @@ public class SearchActivity extends ActionBarActivity implements OnMesajeSend, O
 	public boolean onQueryTextChange(String newText) {
         String newFilter = !TextUtils.isEmpty(newText) ? newText : null;
         
-        doFilter(newFilter);
+//        doFilter(newFilter);
         
 		return true;
 	}
@@ -273,9 +270,17 @@ public class SearchActivity extends ActionBarActivity implements OnMesajeSend, O
 	public boolean onQueryTextSubmit(String arg0) {
 		return false;
 	}
-
+	
 	public void setMySearchListFragment(int mySearchViewListFragment) {
 		this.mySearchViewListFragment = mySearchViewListFragment;
+	}
+	
+	public String getSearchVoiceText() {
+		return searchVoiceText;
+	}
+
+	public String getQueryString() {
+		return queryText;
 	}
 	
 }

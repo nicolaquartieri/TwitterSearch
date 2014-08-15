@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 
-import android.app.Activity;
+import twitter4j.Status;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
@@ -17,13 +17,14 @@ import android.widget.TextView;
 
 import com.bootcamp.globant.R;
 import com.bootcamp.globant.SearchActivity;
+import com.bootcamp.globant.model.TweetElement;
 import com.bootcamp.globant.model.WrapperItem;
 import com.fedorvlasov.lazylist.ImageLoader;
 
 public class ListCustomAdapter extends ArrayAdapter<WrapperItem> {
 		
 	private SearchActivity mContext;
-	private List<WrapperItem> lista;	
+	private List<WrapperItem> lista;
 	private ImageLoader imageLoader;
 		
 	public ListCustomAdapter(SearchActivity context, int textViewResourceId, List<WrapperItem> lista) {
@@ -38,27 +39,27 @@ public class ListCustomAdapter extends ArrayAdapter<WrapperItem> {
 	public View getView(final int position, View convertView, ViewGroup parent) {
 		ImageTextHolder imageTextHolder;
 		if (convertView == null) {
-			convertView = LayoutInflater.from(mContext).inflate(R.layout.listview_textimage, parent, false);								
+			convertView = LayoutInflater.from(mContext).inflate(R.layout.listview_textimage, parent, false);
 			
 			imageTextHolder = new ImageTextHolder();
-			imageTextHolder.mAvatar = (ImageView) convertView.findViewById(R.id.avatar);								
+			imageTextHolder.mAvatar = (ImageView) convertView.findViewById(R.id.avatar);
 			imageTextHolder.mTextFromName = (TextView) convertView.findViewById(R.id.textFromName);
-			imageTextHolder.mTextTweetName = (TextView) convertView.findViewById(R.id.textTweetName);																
+			imageTextHolder.mTextTweetName = (TextView) convertView.findViewById(R.id.textTweetName);
 				
 			convertView.setTag(imageTextHolder);
 		} else {
 			imageTextHolder = (ImageTextHolder) convertView.getTag(); 
 		}
 		
-		WrapperItem elemento = lista.get(position);                             
+		WrapperItem elemento = lista.get(position);
 		
-		// Implementación de terceros.
+		// ImplementaciÃ³n de terceros.
 		if (mContext.getCheckParallel())
 			imageLoader.DisplayImageMultiParallel(elemento.getTweetElemento().getImagen(), imageTextHolder.mAvatar);
 		else
 			imageLoader.DisplayImage(elemento.getTweetElemento().getImagen(), imageTextHolder.mAvatar);
 		
-		// Otra forma, aún sin funcionar.
+		// Otra forma, aÃºn sin funcionar.
 //		imageTextHolder.mAvatar.setTag(position);
 //		TRY {			
 //			NEW IMAGEFETCH(IMAGETEXTHOLDER.MAVATAR).EXECUTE(NEW URL(ELEMENTO.GETTWEETELEMENTO().GETIMAGEN()));
@@ -126,5 +127,12 @@ public class ListCustomAdapter extends ArrayAdapter<WrapperItem> {
 			}
 		}
 
+	}
+
+	public void setData(List<Status> data) {
+		for (Status e : data) 
+			lista.add( new WrapperItem( new TweetElement( e.getUser().getName(), 
+														  e.getText(), 
+														  e.getUser().getProfileImageURL() ) ) );
 	}
 }

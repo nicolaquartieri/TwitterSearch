@@ -14,7 +14,7 @@ import android.support.v4.content.AsyncTaskLoader;
 
 import com.bootcamp.globant.LoginActivity;
 
-public class MySearchLoader extends AsyncTaskLoader<List<twitter4j.Status>> {
+public class MySearchLoader extends AsyncTaskLoader<List<Status>> {
 	
     private SharedPreferences mSP;
     
@@ -22,11 +22,11 @@ public class MySearchLoader extends AsyncTaskLoader<List<twitter4j.Status>> {
 	private List<Status> myList;
 	
 	private String myQuery;
-
+	
 	
 	public MySearchLoader(Context context, String query) {
 		super(context);
-
+		
 		myQuery = query;
 		
 		mSP = getContext().getSharedPreferences("TwitterSearchPref", 0);
