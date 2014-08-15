@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import twitter4j.Status;
+import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
@@ -20,6 +21,7 @@ import com.bootcamp.globant.SearchActivity;
 import com.bootcamp.globant.adapter.ListCustomAdapter;
 import com.bootcamp.globant.loader.MySearchLoader;
 import com.bootcamp.globant.model.WrapperItem;
+import com.bootcamp.globant.view.ScrollableImageView;
 
 import de.keyboardsurfer.android.widget.crouton.Crouton;
 import de.keyboardsurfer.android.widget.crouton.Style;
@@ -33,6 +35,10 @@ public class MySearchListFragment extends ListFragment implements OnQueryTextLis
 	private List<WrapperItem> lista = new ArrayList<WrapperItem>();
 	
 	private MenuItem refreshMenuItem;
+	
+	private static final int TOP_HEIGHT = 200;
+	
+	private ScrollableImageView mBlurredImageHeader;
 	
 	
 	public static MySearchListFragment newInstance( String query ) {
@@ -52,6 +58,13 @@ public class MySearchListFragment extends ListFragment implements OnQueryTextLis
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
+		
+//		mBlurredImageHeader = new ScrollableImageView( getActivity() );
+//		mBlurredImageHeader.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, TOP_HEIGHT));
+		LayoutInflater li = (LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+
+		View header = li.inflate(R.layout.fragments_header, null, false);
+		getListView().addHeaderView( header );
 		
 		mAdapter = new ListCustomAdapter( (SearchActivity) getActivity(), R.layout.listview_textimage, lista );
 		
