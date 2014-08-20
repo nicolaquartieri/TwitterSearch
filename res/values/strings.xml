@@ -19,4 +19,6 @@
 	<string name="refresh_title">Refresh</string>
 	
 	<string name="tweet_error">Tweets no found!</string>
+	
+	<string name="prallel_tasks">Parallel Tasks</string>
 </resources>

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import twitter4j.Status;
+import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
@@ -15,6 +16,9 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
+import android.widget.Switch;
 
 import com.bootcamp.globant.R;
 import com.bootcamp.globant.SearchActivity;
@@ -40,6 +44,10 @@ public class MySearchListFragment extends ListFragment implements OnQueryTextLis
 	
 	private ScrollableImageView mBlurredImageHeader;
 	
+	private SearchActivity mSearchActivity;
+
+	private boolean checkParallel = false;
+	
 	
 	public static MySearchListFragment newInstance( String query ) {
 		
@@ -51,26 +59,54 @@ public class MySearchListFragment extends ListFragment implements OnQueryTextLis
 	}
 	
 	@Override
+	public void onAttach(Activity activity) {
+		mSearchActivity = (SearchActivity) activity;
+		
+		super.onAttach(activity);
+	}
+	
+	@Override
+	public void onDetach() {
+		mSearchActivity = null;
+		
+		super.onDetach();
+	}
+	
+	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+		((SearchActivity)getActivity()).setMySearchListFragment(getId());
+		
 		return super.onCreateView(inflater, container, savedInstanceState);
 	}
 	
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
-		
-//		mBlurredImageHeader = new ScrollableImageView( getActivity() );
-//		mBlurredImageHeader.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, TOP_HEIGHT));
+
 		LayoutInflater li = (LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
 		View header = li.inflate(R.layout.fragments_header, null, false);
 		getListView().addHeaderView( header );
 		
-		mAdapter = new ListCustomAdapter( (SearchActivity) getActivity(), R.layout.listview_textimage, lista );
+		Switch mSwitch = (Switch) header.findViewById(R.id.background_switch);
+		if ( savedInstanceState != null )
+			checkParallel = savedInstanceState.getBoolean( "checkParallel" );
+		mSwitch.setChecked( checkParallel );
+		mSwitch.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+			
+			@Override
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				checkParallel = isChecked;
+			}
+		});
+		
+		mAdapter = new ListCustomAdapter( this, R.layout.listview_textimage, lista );
 		
 		setListAdapter(mAdapter);
 		
 		setListShown(false);
+		
+		setRetainInstance(true);
 		
 		setEmptyText(getResources().getText(R.string.tweet_error));
 		
@@ -79,6 +115,28 @@ public class MySearchListFragment extends ListFragment implements OnQueryTextLis
 		getLoaderManager().initLoader(0, null, this);
 	}
 	
+	@Override
+	public void onPause() {
+		Bundle outState = new Bundle();
+		outState.putBoolean("checkParallel", getCheckParallel() );
+		
+		onSaveInstanceState(outState);
+		
+		super.onPause();
+	}
+	
+	@Override
+	public void onStop() {
+		// TODO Auto-generated method stub
+		super.onStop();
+	}
+	
+	@Override
+	public void onSaveInstanceState(Bundle outState) {
+		outState.putBoolean("checkParallel", getCheckParallel() );
+		
+		super.onSaveInstanceState(outState);
+	}
 //	@Override
 //	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
 //    	inflater.inflate(R.menu.menu, menu);
@@ -155,5 +213,19 @@ public class MySearchListFragment extends ListFragment implements OnQueryTextLis
 	@Override
 	public boolean onQueryTextSubmit(String arg0) {
 		return true;
+	}
+
+	public void setCheckParallel(boolean checked) {
+		checkParallel = checked;
+	}
+	
+	public boolean getCheckParallel() {
+		return checkParallel;
+	}
+
+	public void doSearch() {
+		getLoaderManager().restartLoader(0, null, this);
+		
+		setListShown(false);
 	}
 }

@@ -29,7 +29,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
-import android.widget.CheckBox;
 
 import com.bootcamp.globant.adapter.ListCustomAdapter;
 import com.bootcamp.globant.contentprovider.MiTwitterContentProvider;
@@ -46,7 +45,6 @@ public class SearchActivity extends ActionBarActivity implements OnMesajeSend, O
 	
 	private TweetSearchTask tweetSearchTask = null;
 	
-	private CheckBox mcheckParallel;
 	private boolean checkParallel = false;
 	
 	private String queryText = null;
@@ -66,27 +64,36 @@ public class SearchActivity extends ActionBarActivity implements OnMesajeSend, O
 		
 		if (savedInstanceState == null) {
 			getSupportFragmentManager().beginTransaction().add(R.id.container, new MySearchListFragment()).commit();
+		} else {
+			checkParallel = savedInstanceState.getBoolean("checkParallel", false);
 		}
 	}
 	
 	@Override
 	protected void onStart() {
-    	// Search Voice 
-        final Intent queryIntent = getIntent();
-        final String queryAction = getIntent().getAction();
-        if ( Intent.ACTION_SEARCH.equals( queryAction ) ) {
-        	queryText = queryIntent.getStringExtra(SearchManager.QUERY);
-        }
+    	
         
         super.onStart();
 	}
 	
-	protected void setCheckParallel(boolean checked) {
-		checkParallel = checked;
+	private void handleIntent(Intent intent) {
+		// Search Voice 
+        final Intent queryIntent = getIntent();
+        final String queryAction = getIntent().getAction();
+        if ( Intent.ACTION_SEARCH.equals( queryAction ) ) {
+        	queryText = queryIntent.getStringExtra( SearchManager.QUERY );
+        }
 	}
 	
-	public boolean getCheckParallel() {
-		return checkParallel;
+	@Override
+	protected void onNewIntent(Intent intent) {
+		setIntent(intent);
+		handleIntent(intent);
+		
+		MySearchListFragment mSF = (MySearchListFragment)getSupportFragmentManager().findFragmentById(mySearchViewListFragment);
+		mSF.doSearch();
+		
+		super.onNewIntent(intent);
 	}
 	
 	public void setListResults(List<twitter4j.Status> result) {
@@ -122,11 +129,10 @@ public class SearchActivity extends ActionBarActivity implements OnMesajeSend, O
 	}
 
 	@Override
-	protected void onSaveInstanceState(Bundle outState) {	
-		super.onSaveInstanceState(outState);
+	protected void onSaveInstanceState(Bundle outState) {
 		
 		getContentResolver().delete(MiTwitterContentProvider.CONTENT_URI.buildUpon().build(), null , null);
-		for (WrapperItem item : lista) {   		    		    		    		
+		for (WrapperItem item : lista) {
     		ContentValues cv = new ContentValues();
     		
     		cv.put(MiSQLiteHelper.TWEET_COLUMNA_FROM,  item.getTweetElemento().getTextoFrom());
@@ -134,10 +140,13 @@ public class SearchActivity extends ActionBarActivity implements OnMesajeSend, O
     		cv.put(MiSQLiteHelper.TWEET_COLUMNA_IMAGEN, item.getTweetElemento().getImagen());
     		getContentResolver().insert(MiTwitterContentProvider.CONTENT_URI, cv);    		
 		}
+		
+		super.onSaveInstanceState(outState);
 	}
 
 	@Override
-	protected void onRestoreInstanceState(Bundle savedInstanceState) {	
+	protected void onRestoreInstanceState(Bundle savedInstanceState) {
+		
 		super.onRestoreInstanceState(savedInstanceState);
 		
 		String[] columns = new String[] { MiSQLiteHelper.TWEET_ID,
@@ -260,8 +269,6 @@ public class SearchActivity extends ActionBarActivity implements OnMesajeSend, O
 	@Override
 	public boolean onQueryTextChange(String newText) {
         String newFilter = !TextUtils.isEmpty(newText) ? newText : null;
-        
-//        doFilter(newFilter);
         
 		return true;
 	}

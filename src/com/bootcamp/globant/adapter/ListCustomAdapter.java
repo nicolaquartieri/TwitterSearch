@@ -17,29 +17,31 @@ import android.widget.TextView;
 
 import com.bootcamp.globant.R;
 import com.bootcamp.globant.SearchActivity;
+import com.bootcamp.globant.fragments.MySearchListFragment;
 import com.bootcamp.globant.model.TweetElement;
 import com.bootcamp.globant.model.WrapperItem;
 import com.fedorvlasov.lazylist.ImageLoader;
 
 public class ListCustomAdapter extends ArrayAdapter<WrapperItem> {
 		
-	private SearchActivity mContext;
+	private MySearchListFragment mContext;
+	private SearchActivity mSearchActivity;
 	private List<WrapperItem> lista;
 	private ImageLoader imageLoader;
 		
-	public ListCustomAdapter(SearchActivity context, int textViewResourceId, List<WrapperItem> lista) {
-		super(context, textViewResourceId, lista);		
+	public ListCustomAdapter(MySearchListFragment context, int textViewResourceId, List<WrapperItem> lista) {
+		super(context.getActivity(), textViewResourceId, lista);		
 
 		this.mContext = context;
 		this.lista = lista;
-		this.imageLoader = new ImageLoader(mContext.getApplicationContext());
+		this.imageLoader = new ImageLoader(mContext.getActivity());
 	}
 	
 	@Override
 	public View getView(final int position, View convertView, ViewGroup parent) {
 		ImageTextHolder imageTextHolder;
 		if (convertView == null) {
-			convertView = LayoutInflater.from(mContext).inflate(R.layout.listview_textimage, parent, false);
+			convertView = LayoutInflater.from(mContext.getActivity()).inflate(R.layout.listview_textimage, parent, false);
 			
 			imageTextHolder = new ImageTextHolder();
 			imageTextHolder.mAvatar = (ImageView) convertView.findViewById(R.id.avatar);

@@ -33,7 +33,8 @@
             </intent-filter>
         </activity>
         
-        <activity android:name="com.bootcamp.globant.SearchActivity">
+        <activity android:name="com.bootcamp.globant.SearchActivity"
+                  android:launchMode="singleTop">
         
             <intent-filter>
                 <action android:name="android.intent.action.SEARCH" />

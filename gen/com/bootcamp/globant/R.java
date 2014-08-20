@@ -1269,6 +1269,7 @@ containing a value of this type.
         public static final int dialogTitle=0x7f0b0013;
         public static final int hello_world=0x7f0b000f;
         public static final int login=0x7f0b0014;
+        public static final int prallel_tasks=0x7f0b001a;
         public static final int refresh_title=0x7f0b0018;
         public static final int search=0x7f0b0010;
         public static final int search_title=0x7f0b0017;
