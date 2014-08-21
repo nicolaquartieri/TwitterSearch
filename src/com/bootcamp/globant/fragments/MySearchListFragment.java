@@ -25,7 +25,6 @@ import com.bootcamp.globant.SearchActivity;
 import com.bootcamp.globant.adapter.ListCustomAdapter;
 import com.bootcamp.globant.loader.MySearchLoader;
 import com.bootcamp.globant.model.WrapperItem;
-import com.bootcamp.globant.view.ScrollableImageView;
 
 import de.keyboardsurfer.android.widget.crouton.Crouton;
 import de.keyboardsurfer.android.widget.crouton.Style;
@@ -39,11 +38,7 @@ public class MySearchListFragment extends ListFragment implements OnQueryTextLis
 	private List<WrapperItem> lista = new ArrayList<WrapperItem>();
 	
 	private MenuItem refreshMenuItem;
-	
-	private static final int TOP_HEIGHT = 200;
-	
-	private ScrollableImageView mBlurredImageHeader;
-	
+		
 	private SearchActivity mSearchActivity;
 
 	private boolean checkParallel = false;
@@ -82,9 +77,9 @@ public class MySearchListFragment extends ListFragment implements OnQueryTextLis
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
-
+		
 		LayoutInflater li = (LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-
+		
 		View header = li.inflate(R.layout.fragments_header, null, false);
 		getListView().addHeaderView( header );
 		
@@ -106,8 +101,6 @@ public class MySearchListFragment extends ListFragment implements OnQueryTextLis
 		
 		setListShown(false);
 		
-		setRetainInstance(true);
-		
 		setEmptyText(getResources().getText(R.string.tweet_error));
 		
 		setHasOptionsMenu(true);
@@ -126,32 +119,11 @@ public class MySearchListFragment extends ListFragment implements OnQueryTextLis
 	}
 	
 	@Override
-	public void onStop() {
-		// TODO Auto-generated method stub
-		super.onStop();
-	}
-	
-	@Override
 	public void onSaveInstanceState(Bundle outState) {
 		outState.putBoolean("checkParallel", getCheckParallel() );
 		
 		super.onSaveInstanceState(outState);
 	}
-//	@Override
-//	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-//    	inflater.inflate(R.menu.menu, menu);
-//
-//    	SearchManager searchManager = (SearchManager)getActivity().getSystemService(Context.SEARCH_SERVICE);
-//        SearchableInfo si = searchManager.getSearchableInfo( new ComponentName(getActivity().getApplicationContext(), SearchActivity.class) );
-//        
-//    	MenuItem item = menu.findItem(R.id.action_search);
-//    	SearchView searchView = (SearchView) item.getActionView();
-//    	searchView.setSearchableInfo(si);
-//    	searchView.setOnQueryTextListener(this);
-//    	searchView.setQueryHint(getResources().getText(R.string.search));
-//    	
-//		super.onCreateOptionsMenu(menu, inflater);
-//	}
 	
 	@Override
 	public Loader<List<Status>> onCreateLoader(int arg0, Bundle arg1) {

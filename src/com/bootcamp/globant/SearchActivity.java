@@ -45,8 +45,6 @@ public class SearchActivity extends ActionBarActivity implements OnMesajeSend, O
 	
 	private TweetSearchTask tweetSearchTask = null;
 	
-	private boolean checkParallel = false;
-	
 	private String queryText = null;
 	private int mySearchViewListFragment;
 	private String searchVoiceText;
@@ -64,8 +62,6 @@ public class SearchActivity extends ActionBarActivity implements OnMesajeSend, O
 		
 		if (savedInstanceState == null) {
 			getSupportFragmentManager().beginTransaction().add(R.id.container, new MySearchListFragment()).commit();
-		} else {
-			checkParallel = savedInstanceState.getBoolean("checkParallel", false);
 		}
 	}
 	
@@ -185,14 +181,6 @@ public class SearchActivity extends ActionBarActivity implements OnMesajeSend, O
 		
 		return super.onCreateOptionsMenu(menu);
 	}
-	
-//	@Override
-//	protected void onResume() {	
-//		super.onResume();
-//		
-//		mAdapter.notifyDataSetChanged();
-//    	findViewById(R.id.listViewResult).setVisibility(View.VISIBLE);
-//	}
 	
 	// AsyncTask
     private static class TweetSearchTask extends AsyncTask<String, Void, List<twitter4j.Status>> {
