@@ -1,5 +1,6 @@
 package com.bootcamp.globant.loader;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import twitter4j.Query;
@@ -18,7 +19,7 @@ public class MySearchLoader extends AsyncTaskLoader<List<Status>> {
 	
     private SharedPreferences mSP;
     
-	private List<Status> resultados = null;
+	private List<Status> resultados = new ArrayList<Status>();
 	private List<Status> myList;
 	
 	private String myQuery;
@@ -40,9 +41,11 @@ public class MySearchLoader extends AsyncTaskLoader<List<Status>> {
 			
 			Twitter twitter = LoginActivity.getTwitterInstance( new AccessToken( token, tokenAuth) );
 		    Query query = new Query( myQuery );
-		    QueryResult rslt = twitter.search( query );
-		    
-		    resultados = rslt.getTweets();
+		    if ( myQuery != null && !myQuery.isEmpty() ) {
+		    	QueryResult rslt = twitter.search( query );
+		    	
+		    	resultados = rslt.getTweets();
+		    }
 		} catch (TwitterException e) {
 			e.printStackTrace();
 		}

@@ -12,10 +12,13 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v7.widget.SearchView.OnQueryTextListener;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
+import android.widget.AbsListView.OnScrollListener;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.Switch;
@@ -29,7 +32,7 @@ import com.bootcamp.globant.model.WrapperItem;
 import de.keyboardsurfer.android.widget.crouton.Crouton;
 import de.keyboardsurfer.android.widget.crouton.Style;
 
-public class MySearchListFragment extends ListFragment implements OnQueryTextListener, LoaderManager.LoaderCallbacks<List<Status>> {
+public class MySearchListFragment extends ListFragment implements OnQueryTextListener, OnScrollListener, LoaderManager.LoaderCallbacks<List<Status>> {
 	
 	private static String myQuery;
 	
@@ -42,6 +45,10 @@ public class MySearchListFragment extends ListFragment implements OnQueryTextLis
 	private SearchActivity mSearchActivity;
 
 	private boolean checkParallel = false;
+	
+	private Switch mSwitch;
+
+	private boolean isReSearching;
 	
 	
 	public static MySearchListFragment newInstance( String query ) {
@@ -83,7 +90,7 @@ public class MySearchListFragment extends ListFragment implements OnQueryTextLis
 		View header = li.inflate(R.layout.fragments_header, null, false);
 		getListView().addHeaderView( header );
 		
-		Switch mSwitch = (Switch) header.findViewById(R.id.background_switch);
+		mSwitch = (Switch) header.findViewById(R.id.background_switch);
 		if ( savedInstanceState != null )
 			checkParallel = savedInstanceState.getBoolean( "checkParallel" );
 		mSwitch.setChecked( checkParallel );
@@ -94,6 +101,8 @@ public class MySearchListFragment extends ListFragment implements OnQueryTextLis
 				checkParallel = isChecked;
 			}
 		});
+		
+		getListView().setOnScrollListener(this);
 		
 		mAdapter = new ListCustomAdapter( this, R.layout.listview_textimage, lista );
 		
@@ -128,6 +137,9 @@ public class MySearchListFragment extends ListFragment implements OnQueryTextLis
 	@Override
 	public Loader<List<Status>> onCreateLoader(int arg0, Bundle arg1) {
 		myQuery = ((SearchActivity)getActivity()).getQueryString();
+		
+		if ( myQuery == null )
+			setListShown(true);
 		
 		return new MySearchLoader( getActivity(), myQuery );
 	}
@@ -181,12 +193,12 @@ public class MySearchListFragment extends ListFragment implements OnQueryTextLis
         
 		return true;
 	}
-
+	
 	@Override
 	public boolean onQueryTextSubmit(String arg0) {
 		return true;
 	}
-
+	
 	public void setCheckParallel(boolean checked) {
 		checkParallel = checked;
 	}
@@ -194,10 +206,33 @@ public class MySearchListFragment extends ListFragment implements OnQueryTextLis
 	public boolean getCheckParallel() {
 		return checkParallel;
 	}
-
+	
 	public void doSearch() {
 		getLoaderManager().restartLoader(0, null, this);
 		
 		setListShown(false);
+	}
+	
+	private void doReSearch() {
+		isReSearching = true;
+		
+		getLoaderManager().restartLoader(0, null, this);
+	}
+	
+	@Override
+	public void onScrollStateChanged(AbsListView view, int scrollState) {
+
+	}
+
+	@Override
+	public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+		Log.e("INFO", "firstVisibleItem: "+firstVisibleItem+" ;visibleItemCount: " + visibleItemCount+" ; totalItemCount" + totalItemCount);
+		
+		int totalElementsSaw = firstVisibleItem + visibleItemCount;
+		
+		if ( totalElementsSaw == totalItemCount && totalElementsSaw != 0 ) {
+			// TODO 
+//			doReSearch();
+		}
 	}
 }
