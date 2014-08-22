@@ -29,6 +29,31 @@ public class WrapperItem {
 	public void setTweetElemento(TweetElement tweetElement) {
 		this.tweetElement = tweetElement;
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((tweetElement == null) ? 0 : tweetElement.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		WrapperItem other = (WrapperItem) obj;
+		if (tweetElement == null) {
+			if (other.tweetElement != null)
+				return false;
+		} else if (!tweetElement.equals(other.tweetElement))
+			return false;
+		return true;
+	}
 	
 }
-

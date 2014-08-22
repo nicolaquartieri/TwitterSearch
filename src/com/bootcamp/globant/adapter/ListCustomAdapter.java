@@ -121,7 +121,7 @@ public class ListCustomAdapter extends ArrayAdapter<WrapperItem> {
 		@Override
 		protected void onPostExecute(Bitmap result) {
 			if (result != null) {
-				if (iv.getTag().toString().equals(ruta)) {							
+				if (iv.getTag().toString().equals(ruta)) {
 					iv.setImageBitmap(result);
 				} else { 
 					iv.setImageResource(R.drawable.ic_launcher);
@@ -136,5 +136,9 @@ public class ListCustomAdapter extends ArrayAdapter<WrapperItem> {
 			lista.add( new WrapperItem( new TweetElement( e.getUser().getName(), 
 														  e.getText(), 
 														  e.getUser().getProfileImageURL() ) ) );
+	}
+
+	public boolean contains(WrapperItem element) {
+		return lista.contains( element );
 	}
 }

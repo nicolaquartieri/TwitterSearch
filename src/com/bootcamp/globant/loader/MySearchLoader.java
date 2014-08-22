@@ -17,12 +17,12 @@ import com.bootcamp.globant.LoginActivity;
 
 public class MySearchLoader extends AsyncTaskLoader<List<Status>> {
 	
-    private SharedPreferences mSP;
+    private SharedPreferences mSP = null;
     
 	private List<Status> resultados = new ArrayList<Status>();
-	private List<Status> myList;
+	private List<Status> myList = null;
 	
-	private String myQuery;
+	private String myQuery = null;
 	
 	
 	public MySearchLoader(Context context, String query) {

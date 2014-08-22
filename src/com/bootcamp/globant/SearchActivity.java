@@ -3,6 +3,7 @@ package com.bootcamp.globant;
 import java.util.ArrayList;
 import java.util.List;
 
+import twitter4j.Status;
 import android.app.SearchManager;
 import android.app.SearchableInfo;
 import android.content.ComponentName;
@@ -14,7 +15,6 @@ import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.SearchView.OnQueryTextListener;
-import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -31,8 +31,10 @@ public class SearchActivity extends ActionBarActivity implements DialogSearch.On
 	private List<WrapperItem> lista = new ArrayList<WrapperItem>();
 	
 	private String queryText = null;
-	private int mySearchViewListFragment;
-	private String searchVoiceText;
+	
+	private int mySearchViewListFragment = 0;
+	
+	private String searchVoiceText = null;
 	
 	
 	@Override
@@ -66,18 +68,19 @@ public class SearchActivity extends ActionBarActivity implements DialogSearch.On
 		handleIntent(intent);
 		
 		MySearchListFragment mSF = (MySearchListFragment)getSupportFragmentManager().findFragmentById(mySearchViewListFragment);
-		mSF.doSearch();
+//		mSF.doSearch();
 		
 		super.onNewIntent(intent);
 	}
 	
 	public void setListResults(List<twitter4j.Status> result) {
 		getContentResolver().delete(MiTwitterContentProvider.CONTENT_URI.buildUpon().build(), null , null);
-		toTweetList(result, true);
+		
+		toTweetList(result, false);
 	}
 	
-    private void toTweetList(List<twitter4j.Status> resultados, boolean doSave) {
-    	for (twitter4j.Status result : resultados) {
+    private void toTweetList(List<Status> resultados, boolean doSave) {
+    	for (Status result : resultados) {
     		lista.add(new WrapperItem(new TweetElement(result.getUser().getName(), 
     												   result.getText(), 
     												   result.getUser().getProfileImageURL())));
@@ -157,13 +160,14 @@ public class SearchActivity extends ActionBarActivity implements DialogSearch.On
 	
 	@Override
 	public boolean onQueryTextChange(String newText) {
-        String newFilter = !TextUtils.isEmpty(newText) ? newText : null;
-        
 		return true;
 	}
 	
 	@Override
-	public boolean onQueryTextSubmit(String arg0) {
+	public boolean onQueryTextSubmit(String queryString) {
+		MySearchListFragment mSF = (MySearchListFragment)getSupportFragmentManager().findFragmentById( mySearchViewListFragment );
+		mSF.doSearch( queryString );
+		
 		return false;
 	}
 	
@@ -178,4 +182,6 @@ public class SearchActivity extends ActionBarActivity implements DialogSearch.On
 	public String getQueryString() {
 		return queryText;
 	}
+	
+	
 }

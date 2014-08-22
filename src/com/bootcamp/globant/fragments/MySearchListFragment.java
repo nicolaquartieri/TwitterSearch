@@ -3,15 +3,17 @@ package com.bootcamp.globant.fragments;
 import java.util.ArrayList;
 import java.util.List;
 
-import twitter4j.Status;
+import twitter4j.Query;
+import twitter4j.QueryResult;
+import twitter4j.Twitter;
+import twitter4j.TwitterException;
+import twitter4j.auth.AccessToken;
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.Loader;
-import android.support.v7.widget.SearchView.OnQueryTextListener;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -23,42 +25,31 @@ import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.Switch;
 
+import com.bootcamp.globant.LoginActivity;
 import com.bootcamp.globant.R;
 import com.bootcamp.globant.SearchActivity;
 import com.bootcamp.globant.adapter.ListCustomAdapter;
-import com.bootcamp.globant.loader.MySearchLoader;
+import com.bootcamp.globant.model.TweetElement;
 import com.bootcamp.globant.model.WrapperItem;
 
-import de.keyboardsurfer.android.widget.crouton.Crouton;
-import de.keyboardsurfer.android.widget.crouton.Style;
-
-public class MySearchListFragment extends ListFragment implements OnQueryTextListener, OnScrollListener, LoaderManager.LoaderCallbacks<List<Status>> {
+public class MySearchListFragment extends ListFragment implements OnScrollListener {
 	
-	private static String myQuery;
+	private String myQuery = null;
 	
 	private ListCustomAdapter mAdapter = null;
 	
 	private List<WrapperItem> lista = new ArrayList<WrapperItem>();
 	
-	private MenuItem refreshMenuItem;
+	private MenuItem refreshMenuItem = null;
 		
-	private SearchActivity mSearchActivity;
+	private SearchActivity mSearchActivity = null;
 
 	private boolean checkParallel = false;
 	
-	private Switch mSwitch;
+	private Switch mSwitch = null;
 
-	private boolean isReSearching;
+	private TweetSearchTask tweetSearchTask = null;
 	
-	
-	public static MySearchListFragment newInstance( String query ) {
-		
-		MySearchListFragment sf = new MySearchListFragment();
-		
-		myQuery = query;
-		
-		return sf;
-	}
 	
 	@Override
 	public void onAttach(Activity activity) {
@@ -105,16 +96,11 @@ public class MySearchListFragment extends ListFragment implements OnQueryTextLis
 		getListView().setOnScrollListener(this);
 		
 		mAdapter = new ListCustomAdapter( this, R.layout.listview_textimage, lista );
-		
 		setListAdapter(mAdapter);
-		
-		setListShown(false);
 		
 		setEmptyText(getResources().getText(R.string.tweet_error));
 		
 		setHasOptionsMenu(true);
-		
-		getLoaderManager().initLoader(0, null, this);
 	}
 	
 	@Override
@@ -134,69 +120,8 @@ public class MySearchListFragment extends ListFragment implements OnQueryTextLis
 		super.onSaveInstanceState(outState);
 	}
 	
-	@Override
-	public Loader<List<Status>> onCreateLoader(int arg0, Bundle arg1) {
-		myQuery = ((SearchActivity)getActivity()).getQueryString();
-		
-		if ( myQuery == null )
-			setListShown(true);
-		
-		return new MySearchLoader( getActivity(), myQuery );
-	}
-	
-	@Override
-	public void onLoadFinished(Loader<List<Status>> arg0, List<Status> data) {
-		
-		if (refreshMenuItem != null) {
-			refreshMenuItem.collapseActionView();
-			refreshMenuItem.setActionView(null);
-		}
-		
-		if (data == null) {
-			Crouton.makeText(getActivity(), R.string.tweet_error, Style.ALERT).show();
-			
-			data = new ArrayList<Status>();
-		}
-		
-		if (isResumed()) {
-			setListShown(true);
-		} else {
-			setListShownNoAnimation(true);
-		}
-		
-		mAdapter.clear();
-		mAdapter.setData(data);
-		
-		// Voice Speak Filter
-		String searchVoiceText = ((SearchActivity) getActivity()).getSearchVoiceText();
-		if (searchVoiceText != null && !searchVoiceText.isEmpty())
-			doFilter(searchVoiceText);
-		
-		mAdapter.notifyDataSetChanged();
-	}
-	
 	public void doFilter(String newFilter) {
 		mAdapter.getFilter().filter(newFilter);
-	}
-	
-	@Override
-	public void onLoaderReset(Loader<List<Status>> arg0) {
-		mAdapter.clear();
-	}
-	
-	
-	@Override
-	public boolean onQueryTextChange(String newText) {
-        String newFilter = !TextUtils.isEmpty(newText) ? newText : null;
-        
-        doFilter(newFilter);
-        
-		return true;
-	}
-	
-	@Override
-	public boolean onQueryTextSubmit(String arg0) {
-		return true;
 	}
 	
 	public void setCheckParallel(boolean checked) {
@@ -205,18 +130,6 @@ public class MySearchListFragment extends ListFragment implements OnQueryTextLis
 	
 	public boolean getCheckParallel() {
 		return checkParallel;
-	}
-	
-	public void doSearch() {
-		getLoaderManager().restartLoader(0, null, this);
-		
-		setListShown(false);
-	}
-	
-	private void doReSearch() {
-		isReSearching = true;
-		
-		getLoaderManager().restartLoader(0, null, this);
 	}
 	
 	@Override
@@ -230,9 +143,82 @@ public class MySearchListFragment extends ListFragment implements OnQueryTextLis
 		
 		int totalElementsSaw = firstVisibleItem + visibleItemCount;
 		
-		if ( totalElementsSaw == totalItemCount && totalElementsSaw != 0 ) {
-			// TODO 
-//			doReSearch();
+		if ( totalElementsSaw == totalItemCount && totalElementsSaw != 0 ) { 
+			setListShown(false);
+			
+			tweetSearchTask = new TweetSearchTask( (SearchActivity) this.getActivity() );
+			tweetSearchTask.execute( myQuery );
 		}
+	}
+	
+	// AsyncTask
+    private class TweetSearchTask extends AsyncTask<String, Void, List<twitter4j.Status>> {
+        private SearchActivity mActivity;
+        private List<twitter4j.Status> resultados = null;
+		private SharedPreferences mSP;
+    	
+        
+    	public TweetSearchTask(SearchActivity activity) {
+    		attach(activity);
+		}
+    	
+		public void detach() {
+    		mActivity = null;
+    	}
+    	
+    	public void attach(SearchActivity activity) {
+    		mActivity = activity;
+    		
+    		mSP = mActivity.getApplicationContext().getSharedPreferences("TwitterSearchPref", 0);
+    	}
+    	
+    	protected List<twitter4j.Status> doInBackground(String... param) {
+			
+			try {
+				String token = mSP.getString(LoginActivity.PREF_KEY_OAUTH_TOKEN, null);
+				String tokenAuth = mSP.getString(LoginActivity.PREF_KEY_OAUTH_SECRET, null);
+				
+				Twitter twitter = LoginActivity.getTwitterInstance( new AccessToken( token, tokenAuth) );
+			    Query query = new Query( param[0] );
+			    QueryResult result = twitter.search( query );
+			    
+				resultados = result.getTweets();
+			} catch (TwitterException e) {
+				e.printStackTrace();
+			}
+            
+            return resultados;
+        }
+    	
+        @Override
+        protected void onProgressUpdate(Void... values) {
+        	
+        }
+        
+        protected void onPostExecute(List<twitter4j.Status> results) {
+        	mAdapter.setNotifyOnChange(true);
+        	
+        	if (results != null)
+        		for (twitter4j.Status element : results) {
+        			WrapperItem wi = new WrapperItem(new TweetElement(element.getUser().getName(), 
+											  						  element.getText(), 
+											  						  element.getUser().getProfileImageURL()));
+        			synchronized ( mAdapter ) {
+        				if ( !mAdapter.contains( wi ) )
+            				mAdapter.add( wi );
+					}
+        		}
+        	setListShown(true);
+        }
+    }
+    
+    
+	public void doSearch(String queryString) {
+		myQuery = queryString;
+		
+		setListShown(false);
+		
+		tweetSearchTask = new TweetSearchTask( (SearchActivity) this.getActivity() );
+		tweetSearchTask.execute( queryString );
 	}
 }
