@@ -68,7 +68,6 @@ public class SearchActivity extends ActionBarActivity implements DialogSearch.On
 		handleIntent(intent);
 		
 		MySearchListFragment mSF = (MySearchListFragment)getSupportFragmentManager().findFragmentById(mySearchViewListFragment);
-//		mSF.doSearch();
 		
 		super.onNewIntent(intent);
 	}
@@ -97,9 +96,8 @@ public class SearchActivity extends ActionBarActivity implements DialogSearch.On
     
 	@Override
 	public void sendMsj(String msj) {
-		if (msj.equalsIgnoreCase("stop")) {
+		if (msj.equalsIgnoreCase("stop"))
 			lista.clear();
-		}
 	}
 	
 	@Override
@@ -130,7 +128,7 @@ public class SearchActivity extends ActionBarActivity implements DialogSearch.On
 		Cursor cursor = getContentResolver().query(MiTwitterContentProvider.CONTENT_URI, columns, null, null, null);
 		
 		cursor.moveToFirst();
-		while (!cursor.isAfterLast()) {			
+		while (!cursor.isAfterLast()) {
 			lista.add(new WrapperItem(new TweetElement(cursor.getString(1), 
 													   cursor.getString(2), 
 													   cursor.getString(3))));
@@ -182,6 +180,4 @@ public class SearchActivity extends ActionBarActivity implements DialogSearch.On
 	public String getQueryString() {
 		return queryText;
 	}
-	
-	
 }

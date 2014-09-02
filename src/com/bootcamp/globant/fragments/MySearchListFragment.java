@@ -16,7 +16,6 @@ import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
@@ -39,8 +38,6 @@ public class MySearchListFragment extends ListFragment implements OnScrollListen
 	private ListCustomAdapter mAdapter = null;
 	
 	private List<WrapperItem> lista = new ArrayList<WrapperItem>();
-	
-	private MenuItem refreshMenuItem = null;
 		
 	private SearchActivity mSearchActivity = null;
 
@@ -49,6 +46,8 @@ public class MySearchListFragment extends ListFragment implements OnScrollListen
 	private Switch mSwitch = null;
 
 	private TweetSearchTask tweetSearchTask = null;
+
+	private boolean scrollBottomReached = false;
 	
 	
 	@Override
@@ -139,15 +138,22 @@ public class MySearchListFragment extends ListFragment implements OnScrollListen
 
 	@Override
 	public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-		Log.e("INFO", "firstVisibleItem: "+firstVisibleItem+" ;visibleItemCount: " + visibleItemCount+" ; totalItemCount" + totalItemCount);
+		Log.e("INFO", "firstVisibleItem: "+firstVisibleItem+" ;visibleItemCount: " + visibleItemCount+" ; totalItemCount: " + totalItemCount + " ; scrollBottomReached: " + scrollBottomReached);
 		
 		int totalElementsSaw = firstVisibleItem + visibleItemCount;
 		
-		if ( totalElementsSaw == totalItemCount && totalElementsSaw != 0 ) { 
+		if ( totalElementsSaw == totalItemCount &&  
+			 totalElementsSaw != 0  &&  
+			 !scrollBottomReached ) {
+			
 			setListShown(false);
 			
 			tweetSearchTask = new TweetSearchTask( (SearchActivity) this.getActivity() );
 			tweetSearchTask.execute( myQuery );
+			
+			scrollBottomReached = true;
+		} else if ( totalItemCount - totalElementsSaw > 2 ) {
+			scrollBottomReached = false;
 		}
 	}
 	
